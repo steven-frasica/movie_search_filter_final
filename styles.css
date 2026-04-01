@@ -1,0 +1,47 @@
+* {
+  box-sizing: border-box;
+
+}
+
+:root {
+  /* These custom properties are reusable */
+  /* clamp(min, preferred, max) keeps values responsive without extra media queries. */
+  /* Side padding for page sections, makes it responsive */
+  --gutter: clamp(28px, 4vw, 56px);
+  /* Vertical spacing for the hero area, makes it responsive */
+  --section-gap: clamp(14px, 2.2vw, 24px);
+}
+
+html,
+body {
+  /* Needed for sticky footer technique with flex column layout. */
+  height: 100%;
+}
+
+.modal {
+  display: none;
+}
+
+body {
+  /* Reset default margin and establish the page as a column layout. */
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: "Segoe UI", sans-serif;
+  padding: 0;
+  box-sizing: border-box;
+  /* Layered gradients build depth instead of a flat background color. */
+  background: 
+    /* Soft glow near top-left */
+    radial-gradient(850px 450px at 8% -10%, #0b417b 20%, transparent 60%),
+    /* Soft glow near top-right */
+    radial-gradient(850px 450px at 92% 0%, #1c65b5 0%, transparent 60%),
+    /* Main dark-to-mid blue wash. */
+    linear-gradient(160deg, #041a37 0%, #083d77 58%, #052f5f 100%);
+}
+
+main {
+  /* This grows to occupy leftover height, pushing footer to bottom on short pages. */
+  flex: 1;
+}
