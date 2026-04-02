@@ -16,6 +16,27 @@ let latestSearchId = 0;
 // 3. Normalize/sort the data in memory.
 // 4. Render the current UI state back into the DOM.
 
+
+
+// Shows or hides the loading state inside the movie grid.
+// This is a small example of UI state: the underlying movie data may not change,
+// but the interface still needs to communicate that work is happening.
+function setLoading(isLoading, message = "Loading movies...") {
+  // Query the two UI nodes that change during loading.
+  const movieGridEl = document.querySelector(".movie-results--grid");
+  const sortSelectEl = document.querySelector("#sort-select");
+  if (isLoading) {
+    // Swap the results grid for a temporary loading UI.
+    movieGridEl.innerHTML = `
+      <div class="movie-grid__loading" role="status" aria-live="polite">
+        <div class="spinner" aria-hidden="true"></div>
+        <p>${message}</p>
+      </div>`;
+  }
+  // Disable sorting while loading to avoid conflicting re-sorts.
+  if (sortSelectEl) sortSelectEl.disabled = isLoading;
+}
+
 // Renders either movie cards or an empty-state message.
 // The important idea is that the DOM is re-derived from the current state
 // instead of manually tweaking lots of small elements.
@@ -62,4 +83,29 @@ function buildMovieCardMarkup(movie) {
           </div>`;
 }
 
-renderMovieGrid([], (message = "Use the search bar to find movies or shows"));
+function onSearchChange(event) {
+  // This handler is wired directly from the input element in index.html
+  // It is responsible only for orchestrating search timing, not rendering details.
+  // event.target is the <input>, so its current value is the live search text.
+  // Normalize the input so accidental spaces do not trigger bad searches.
+  query = event.target.value.trim();
+  // Each keystroke gets a unique id so we can ignore stale responses later.
+  const searchId = ++latestSearchId;
+
+  // Debounce prevents firing API requests on every single key press.
+  clearTimeout(searchDebounceTimer);
+  if (!query) {
+    // Reset both in-memory result lists when the search box becomes empty.
+    searchResults = [];
+    movieDetails = [];
+    renderMovieGrid([], "Use the search bar to find movies or shows")
+  }
+  // Wait 350ms after the latest keystroke before hitting the API.
+  searchDebounceTimer = setTimeout(() => {
+    runSearch(query, searchId);
+  }, 350)
+}
+
+renderMovieGrid([], "Use the search bar to find movies or shows");
+
+setLoading(false);
