@@ -42,6 +42,110 @@ body {
 }
 
 main {
-  /* This grows to occupy leftover height, pushing footer to bottom on short pages. */
+  /* This grows to occupy leftover height, pushing footer to bottom on short */
   flex: 1;
 }
+
+.hero {
+  padding-top: var(--section-gap);
+  padding-right: var(--gutter);
+  padding-bottom: calc(var(--section-gap) - 6px);
+  padding-left: var(--gutter);
+}
+
+/* movie-results is a section */
+section {
+  padding: 0 var(--gutter);
+  margin: 0 auto;
+  max-width: 1520px;
+}
+
+/* Main page headline with responsive sizing */
+h1 {
+  margin: 0;
+  letter-spacing: 0.1em;
+  font-size: 2.25rem;
+  color: #63f0dc;
+  background: linear-gradient(
+    120deg,
+    #7ee8ff 0%,
+    #63f0dc 40%,
+    #1de9b6 80%,
+    #00bfae 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.45);
+}
+
+h2 {
+  margin: 8px 0 clamp(12px, 2vw, 20px);
+  font-size: clamp(1.35rem, 1.25vw, 2.1rem);
+  color: #7ea9b5;
+  background: linear-gradient(120deg, #c0e7f2 0%, #9ecad9 48%, #79a9bf 100%);
+  /* Keep subtitle more subdued than h1 while preserving themed gradient. */
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: #7ea9b5;
+}
+
+/* Search input and sort controls. */
+.hero__controls {
+  /* Flex-wrap keeps controls usable when width is constrained. */
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.search-bar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Search bar and sort */
+input, .sort-select {
+  color: #b6d9e7;
+  background-color: transparent;
+  border-top: none;
+  border-right: none;
+  border-left: none;
+  border-bottom: 1px solid white;
+  margin: 2px;
+  font-size: 20px;
+}
+
+input {
+  min-width: 250px;
+  padding-right: 2rem;
+}
+
+input::placeholder {
+  color: #b6d9e7;
+}
+
+.search-bar__clear {
+  position: absolute;
+  right: 0.15rem;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  color: #b6d9e7;
+  font-size: 1.25rem;
+  line-height: 1;
+  padding: 0.15rem 0.25rem;
+  opacity: 1;
+  cursor: pointer;
+}
+
+.search-bar input:placeholder-shown + .search-bar__clear {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.search-bar__clear:hover {
+  color: #d2deed;
+}
+
