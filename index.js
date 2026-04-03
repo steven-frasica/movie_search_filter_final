@@ -106,6 +106,92 @@ function onSearchChange(event) {
   }, 350)
 }
 
-renderMovieGrid([], "Use the search bar to find movies or shows");
+function clearSearchInput() {
+  // Clear both the visible input and the in-memory state so the UI and data stay in sync.
+  const searchInput = document.querySelector("#search-input");
+  if (!searchInput) return;
+  clearTimeout(searchDebounceTimer);
+  searchInput.value = "";
+  searchResults = [];
+  movieDetails = [];
+  latestSearchId += 1;
+  renderMovieGrid([], "Use the search bar to find movies or shows");
+  searchInput.focus();
+}
 
-setLoading(false);
+async function runSearch(query, searchId) {
+  // This function is the app's async data pipeline.
+  // It fetches search results first, then fetches richer movie details for each match.
+  // Only the newest search request is allowed to control the loading state
+  if (searchId === latestSearchId) {
+    setLoading(true, "Searching movies")
+  }
+
+  try {
+    // Fetch a list of matching titles.
+    const response = await fetch(
+      `https://www.omdbapi.com/?s=${encodeURIComponent(query)}&apikey=${API_KEY}`,
+    );
+    // Turn the HTTP response body into a JavaScript object.
+    const data = await response.json();
+    // Ignore stale responses from older searches.
+    if (searchId !== latestSearchId) return;
+    if (data.Response === "False") {
+      // OMDB returns many failues inside the JSON payload instead of with HTTP errors.
+      searchResults = [];
+      movieDetails = [];
+      renderMovieGrid([], mapOmdbErrorMessage(data.Error));
+      return;
+    }
+    // The search endpoint returns lightweight results under the Search property.
+    searchResults = data.Search ?? [];
+    if (!searchResults.length) {
+      movieDetails = [];
+      renderMovieGrid([], "No matches found.");
+      return;
+    }
+
+    // Fetch full details for each movie card (up to 6).
+    // This is a two-step API strategy:
+    // - first call: quick broad search by title
+    // - second calls: richer details by imdbID for the cards/modal
+    // Each request is isolated so one failure doesn't break the batch.
+    const detailPromises = searchResults.slice(0, 6).map(async (movie) => {
+      try {
+        const res = await fetch(
+          `https://www.omdbapi.com/?i=${movie.imdbID}&apikey=${API_KEY}`,
+        );
+        const data = await res.json();
+        // If one detail request failts logically, keep the base movie object.
+        return data.Response === "False" ? movie : data;
+      } catch {
+        // Fallback to the lightweight movie object if details fail.
+        return movie;
+      }
+    });
+    // Resolve all detail requests concurrently instead of one at a time.
+    // Promise.all improves total wait time beacuse the requests run in parallel.
+    movieDetails = await Promise.all(detailPromises);
+
+    // Sorting is applied after details load because fields like rating/runtime live there.
+    const sortSelectEl = document.querySelector('#sort-select');
+
+    if (sortSelectEl && sortSelectEl.value) {
+      sortMovies(sortSelectEl.value)
+    } else {
+      renderMovieGrid(movieDetails)
+    }
+  } catch (error) {
+    // Network errors, bad JSON, or blocked requests end up here.
+    if (searchId !== latestSearchId) return;
+    movieDetails = [];
+    renderMovieGrid([], "Search failed. Check your network and API key.")
+  } finally {
+    // finally guarantees cleanup whether the request succeeded or failed.
+    if (searchId === latestSearchId) {
+      setLoading(false);
+    }
+  }
+}
+
+renderMovieGrid([], "Use the search bar to find movies or shows");
