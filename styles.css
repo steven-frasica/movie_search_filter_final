@@ -1,10 +1,10 @@
 * {
+  /* Include padding and border inside each element's declared size. */
   box-sizing: border-box;
-
 }
 
 :root {
-  /* These custom properties are reusable */
+  /* These custom properties act like reusable design tokens. */
   /* clamp(min, preferred, max) keeps values responsive without extra media queries. */
   /* Side padding for page sections, makes it responsive */
   --gutter: clamp(28px, 4vw, 56px);
@@ -16,10 +16,6 @@ html,
 body {
   /* Needed for sticky footer technique with flex column layout. */
   height: 100%;
-}
-
-.modal {
-  display: none;
 }
 
 body {
@@ -34,33 +30,40 @@ body {
   /* Layered gradients build depth instead of a flat background color. */
   background: 
     /* Soft glow near top-left */
-    radial-gradient(850px 450px at 8% -10%, #0b417b 20%, transparent 60%),
+    radial-gradient(850px 450px at 8% -10%, #0b417b 10%, transparent 60%),
     /* Soft glow near top-right */
-    radial-gradient(850px 450px at 92% 0%, #1c65b5 0%, transparent 60%),
+    radial-gradient(850px 450px at 92% 0%, #1c65b5 0%, transparent 56%),
     /* Main dark-to-mid blue wash. */
     linear-gradient(160deg, #041a37 0%, #083d77 58%, #052f5f 100%);
 }
 
 main {
-  /* This grows to occupy leftover height, pushing footer to bottom on short */
+  /* This grows to occupy leftover height, pushing footer to bottom on short pages. */
   flex: 1;
 }
 
-.hero {
-  padding-top: var(--section-gap);
-  padding-right: var(--gutter);
-  padding-bottom: calc(var(--section-gap) - 6px);
-  padding-left: var(--gutter);
-}
-
-/* movie-results is a section */
+/* Center each section and apply responsive horizontal gutter */
 section {
   padding: 0 var(--gutter);
   margin: 0 auto;
   max-width: 1520px;
 }
 
-/* Main page headline with responsive sizing */
+.hero {
+  margin: 0;
+  /* Keep the hero aligned with the movie results section. */
+  padding-top: var(--section-gap);
+  padding-right: var(--gutter);
+  padding-bottom: calc(var(--section-gap) - 6px);
+  padding-left: var(--gutter);
+}
+
+/* Site name */
+/*
+  Site name (main headline):
+  - Aquamarine/teal gradient for Theater6 branding
+  - Responsive size and subtle shadow for readability
+*/
 h1 {
   margin: 0;
   letter-spacing: 0.1em;
@@ -78,38 +81,19 @@ h1 {
   -webkit-text-fill-color: transparent;
   text-shadow: 0 1px 10px rgba(0, 0, 0, 0.45);
 }
-
+/* Main page headline with responsive sizing */
 h2 {
   margin: 8px 0 clamp(12px, 2vw, 20px);
-  font-size: clamp(1.35rem, 1.25vw, 2.1rem);
-  color: #7ea9b5;
+  font-size: clamp(1.35rem, 1vw, 2.1rem);
+  color: #a9d9e6;
   background: linear-gradient(120deg, #c0e7f2 0%, #9ecad9 48%, #79a9bf 100%);
   /* Keep subtitle more subdued than h1 while preserving themed gradient. */
   -webkit-background-clip: text;
   background-clip: text;
-  -webkit-text-fill-color: #7ea9b5;
+  -webkit-text-fill-color: transparent;
 }
 
-figure {
-  /* Treat the poster figure as a consistent frame. */
-  display: flex;
-  aspect-ratio: 2 / 3;
-  flex-direction: column;
-  align-items: center;
-}
-
-img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  display: block;
-  border-radius: 12px;
-  transition: all 0.2s ease;
-} 
-
-
-
-/* Search input and sort controls. */
+/* Search input and sort control row. */
 .hero__controls {
   /* Flex-wrap keeps controls usable when width is constrained. */
   display: flex;
@@ -123,8 +107,10 @@ img {
   align-items: center;
 }
 
-/* Search bar and sort */
-input, .sort-select {
+/* Search bar and sort select */
+input,
+.sort-select {
+  /* Shared visual treatment keeps both controls in the same design system. */
   color: #b6d9e7;
   background-color: transparent;
   border-top: none;
@@ -139,9 +125,9 @@ input {
   min-width: 250px;
   padding-right: 2rem;
 }
-
+/* placeholder color */
 input::placeholder {
-  color: #b6d9e7;
+  color: #a9d9e6;
 }
 
 .search-bar__clear {
@@ -152,7 +138,7 @@ input::placeholder {
   border: 0;
   background: transparent;
   color: #b6d9e7;
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   line-height: 1;
   padding: 0.15rem 0.25rem;
   opacity: 1;
@@ -168,9 +154,27 @@ input::placeholder {
   color: #d2deed;
 }
 
-.movie-results--grid {
+figure {
+  /* Treat the poster figure as a consistent frame. */
+  display: flex;
+  aspect-ratio: 2 / 3;
+  flex-direction: column;
+  align-items: center;
+}
+
+img {
+  /* object-fit prevents poster distortion. */
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 12px;
+  transition: transform 0.2s ease;
+}
+
+.movie-grid {
   /* 6-column desktop grid that collapses through media queries below. */
-  /* Grid is a good fit because the layout is two dimensional: rows and columns both matter. */
+  /* Grid is a good fit because the layout is two-dimensional: rows and columns both matter. */
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   align-items: start;
@@ -179,15 +183,119 @@ input::placeholder {
   padding-bottom: clamp(16px, 2.8vw, 30px);
 }
 
+.movie-grid__message {
+  /* Empty-state card styling (text gradient is on inner span). */
+  grid-column: 1 / -1;
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 18px;
+  text-align: center;
+  border-radius: 14px;
+  border: 1px solid rgba(126, 232, 255, 0.28);
+  background: linear-gradient(
+    160deg,
+    rgba(10, 26, 48, 0.72),
+    rgba(20, 43, 70, 0.58)
+  );
+  box-shadow: 0 10px 26px rgba(0, 6, 18, 0.35);
+}
+
+.movie-grid__message-body {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.movie-grid__message-icon {
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.85rem;
+  line-height: 1;
+  font-weight: 700;
+  color: #f3fbff;
+  border: 1px solid rgba(126, 232, 255, 0.78);
+  border-radius: 999px;
+  background: rgba(126, 232, 255, 0.3);
+  box-shadow: 0 0 0 1px rgba(6, 18, 36, 0.35) inset;
+}
+
+.movie-grid__message-text {
+  color: #a9d9e6;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  background: none;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: initial;
+}
+
+.movie-grid__loading {
+  /* Full-row loading UI centered inside the grid. */
+  grid-column: 1 / -1;
+  min-height: 180px;
+  display: grid;
+  place-items: center;
+  gap: 10px;
+  color: #cfe7ff;
+}
+
+.movie-grid__loading p {
+  margin: 0;
+}
+
+.spinner {
+  /* CSS border animation creates the loading spinner. */
+  width: 34px;
+  height: 34px;
+  border: 3px solid rgba(255, 255, 255, 0.25);
+  border-top-color: #7ee8ff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .movie-card {
   /* Relative positioning creates the containing block for the info overlay. */
-  /* Because the info panel is absoutely positioned, it anchors to this card. */
+  /* Because the info panel is absolutely positioned, it anchors to this card. */
   position: relative;
   align-self: start;
   overflow: hidden;
   border-radius: 12px;
 }
 
+figure,
+.movie-card__media {
+  margin: 0;
+  width: 100%;
+}
+
+.movie-card__media {
+  /* 2:3 frame, larger posters for better visibility. */
+  aspect-ratio: 2/3;
+  display: grid;
+  /* Center the image inside the poster frame. */
+  place-items: center;
+  min-height: 260px;
+  cursor: pointer;
+}
+
+.movie-card:hover img {
+  transform: translateY(-2px) scale(1.03);
+}
+
+/* Reveal info panel while hovering anywhere on the card. */
 .movie-card:hover .movie-card__details {
   opacity: 1;
   transform: translateY(0);
@@ -198,7 +306,7 @@ input::placeholder {
   /* Hidden overlay that fades in over the poster on hover. */
   /* This is an example of progressive disclosure: details stay hidden until needed. */
   position: absolute;
-  left: 8px; 
+  left: 8px;
   right: 8px;
   bottom: 8px;
   max-height: calc(100% - 16px);
@@ -213,7 +321,7 @@ input::placeholder {
     180deg,
     rgba(10, 26, 48, 0.95),
     rgba(20, 43, 70, 0.92)
-  ); 
+  );
   /* Hidden by default; revealed by parent hover for stable interaction. */
   transform: translateY(10px);
   opacity: 0;
@@ -224,48 +332,279 @@ input::placeholder {
   cursor: pointer;
 }
 
-.movie-card__media {
-  /* 2:3 frame, larger posters for better visibility. */
-  aspect-ratio: 2 / 3;
-  display: grid;
-  /* Center the image inside the poster frame. */
-  place-items: center;
-  min-height: 260px;
-  cursor: pointer;
-}
-
-.movie-card__details h3, 
+.movie-card__details h3,
 .movie-card__details p {
   overflow-wrap: anywhere;
 }
 
-figure,
-.movie-card__media {
-  margin: 0;
-  width: 100%;
+.movie-details-modal {
+  /* Full-screen backdrop that dims the page behind dialog content. */
+  /* display:none keeps it out of layout until JS toggles the open class. */
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 8, 20, 0.72);
+  z-index: 1000;
 }
 
-.movie-card:hover img {
-  transform: translateY(-2px) scale(1.03);
+.movie-card__details h3 {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
 }
+
+.movie-card__details p {
+  margin: 0 0 6px;
+  font-size: 0.77rem;
+  line-height: 1.35;
+}
+
+/* Toggled on in JS to show modal. */
+.movie-details-modal--open {
+  display: flex;
+}
+
+/* modal content */
+.movie-details-modal__dialog {
+  /* width:min(...) keeps the modal readable without overflowing the viewport. */
+  /* max-height plus overflow:auto ensures long plots remain scrollable. */
+  color: #fff;
+  width: min(980px, 100%);
+  max-height: 80vh;
+  overflow: auto;
+  padding: 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(126, 232, 255, 0.28);
+  background: linear-gradient(
+    180deg,
+    rgba(10, 26, 48, 0.96),
+    rgba(20, 43, 70, 0.93)
+  );
+}
+
+.movie-details-modal__content {
+  /* Desktop layout: poster + text side-by-side. */
+  /* CSS Grid is a good fit here because the modal has two explicit columns. */
+  display: grid;
+  grid-template-columns: minmax(220px, 320px) 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.movie-details-modal__poster {
+  /* Reuse the same poster ratio inside the modal. */
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid rgba(126, 232, 255, 0.28);
+}
+
+.movie-details-modal__body {
+  /* Prevent long text from forcing the grid wider than the modal allows. */
+  min-width: 0;
+}
+
+.movie-details-modal__close {
+  float: right;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 1.6rem;
+  cursor: pointer;
+}
+
+/* Modal text spacing/color */
+.movie-details-modal__dialog h3 {
+  margin: 0 0 6px;
+}
+
+.movie-details-modal__meta {
+  margin: 10px 0 12px;
+  color: #cbd6e4;
+  font-size: 0.9rem;
+}
+
+/* Style each field in the modal to appear on its own line with spacing */
+.movie-details-modal__meta div,
+.movie-details-modal__runtime div,
+.movie-details-modal__cast div {
+  /* Treat each labeled detail as a separate row for readability. */
+  margin-bottom: 6px;
+  line-height: 1.5;
+}
+
+.movie-details-modal__runtime {
+  margin: 0 0 10px;
+  color: #d4ddeb;
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+
+.movie-details-modal__cast {
+  margin: 0 0 12px;
+  color: #dce5f1;
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.movie-details-modal__text {
+  margin: 0 0 12px;
+  color: #dce5f1;
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.movie-details-modal__plot {
+  /* Flex keeps the Plot label and paragraph aligned on one row. */
+  /* This is a simple one-dimensional layout, so flex is more appropriate than grid here. */
+  display: flex;
+}
+
+.movie-details-modal__plot-text {
+  /* Remove the default paragraph top margin so it lines up with the Plot label. */
+  margin-top: 0;
+  margin-left: 0.5rem;
+}
+
+/* FOOTER */
 
 footer {
+  /* Footer now matches the blue family used by the message bar. */
   background:
-  radial-gradient(
-    700px 320px at 12% 0%,
-    rgba(34, 78, 122, 0.26) 0%,
-    transparent 62%
-  ),
-  radial-gradient(
-    680px 300px at 88% 8%,
-    rgba(24, 60, 100, 0.22) 0%,
-    transparent 60%
-  ),
-  linear-gradient(165deg,
-  rgba(10, 26, 48, 0.95) 0%,
-  rgba(20, 43, 70, 0.9) 100%
-  );
+    radial-gradient(
+      700px 320px at 12% 0%,
+      rgba(34, 78, 122, 0.26) 0%,
+      transparent 62%
+    ),
+    radial-gradient(
+      680px 300px at 88% 8%,
+      rgba(24, 60, 100, 0.22) 0%,
+      transparent 60%
+    ),
+    linear-gradient(
+      165deg,
+      rgba(10, 26, 48, 0.95) 0%,
+      rgba(20, 43, 70, 0.9) 100%
+    );
   margin-top: auto;
   padding: 8px 0 12px;
 }
 
+.footer__inner {
+  /* Shared centered wrapper. */
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.footer__stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.footer__logo {
+  display: flex;
+}
+
+.footer__link,
+.footer__copyright {
+  color: #b6d9e7;
+}
+
+.footer__list {
+  margin: 14px 0 18px 0;
+}
+
+.footer__attribution {
+  margin-top: 10px;
+  font-size: 12px;
+  padding: 6px 0 2px;
+  text-decoration: none;
+  color: #b6d9e7;
+}
+
+.footer__logo {
+  display: flex;
+  height: 92px;
+  padding: 6px 0;
+}
+
+.footer__img {
+  width: 100%;
+  height: auto;
+  border-radius: 0;
+  /*
+    Footer logo color filter: tuned to match footer text (#b6d9e7).
+    This filter is for a white or light base logo.
+  */
+  filter: invert(90%) sepia(12%) saturate(542%) hue-rotate(166deg)
+    brightness(90%) contrast(92%);
+}
+
+@media (max-width: 760px) {
+  .movie-details-modal__content {
+    /* Stack modal content vertically on smaller screens. */
+    grid-template-columns: 1fr;
+  }
+
+  .movie-details-modal__poster {
+    max-width: 260px;
+    justify-self: center;
+  }
+}
+
+@media (max-width: 1100px) {
+  .movie-grid {
+    /* 6 -> 3 columns for medium screens. */
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .movie-grid {
+    /* 3 -> 2 columns for tablets/small laptops. */
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .movie-card__details {
+    padding: 9px;
+  }
+
+  .movie-card__details h3 {
+    font-size: 0.88rem;
+  }
+
+  .movie-card__details p {
+    font-size: 0.72rem;
+    line-height: 1.28;
+  }
+}
+
+@media (max-width: 640px) {
+  input {
+    /* Let the search bar consume more width on smaller screens. */
+    min-width: 80%;
+  }
+}
+
+@media (max-width: 480px) {
+  .movie-grid {
+    /* Single-column stack on narrow phones. */
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Larger posters on desktop (6-column layout) */
+@media (min-width: 1101px) {
+  .movie-grid {
+    /* Give desktop cards a taller baseline row height. */
+    grid-auto-rows: minmax(380px, auto);
+  }
+}

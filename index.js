@@ -1,22 +1,24 @@
 // App state shared across handlers.
 // Keeping it at file scope makes the data accessible to search, sort, and modal logic.
 // In a larger app, this would usually move into a dedicated state/store layer.
-// - searchResults: lightweight search results from OMDb `s=` endpoint
+// - searchResults: lightweight search results from OMDB `s=` endpoint
+// - movieDetails: enriched movie objects from OMDB `i=` endpoint
 let searchResults = [];
-// - movieDetails: enriched movie objects from OMDb `i=` endpoint
 let movieDetails = [];
 // - used to debounce search input
 let searchDebounceTimer;
 // - tracks the most recent search to avoid race conditions
 let latestSearchId = 0;
 
-// Front-end flow:
+// This file follows a common front-end flow:
 // 1. Read user input from the DOM.
 // 2. Fetch data from the OMDb API.
 // 3. Normalize/sort the data in memory.
 // 4. Render the current UI state back into the DOM.
+// That sequence is worth understanding for interviews because it describes
+// how many client-side apps work even when the tooling is more advanced.
 
-// Converts raw OMDB error message into friendlier UI text.
+// Converts raw OMDB error messages into friendlier UI text.
 // Keeps API wording separate from user-facing wording.
 function mapOmdbErrorMessage(errorMessage) {
   if (!errorMessage) return "No matches found.";
@@ -27,7 +29,7 @@ function mapOmdbErrorMessage(errorMessage) {
     return "Invalid OMDB API key. Update your API key and try again.";
   if (normalized.includes("too many results"))
     return "Too many matches. Please type a more specific title.";
-  if (normalized.includes("moive not found")) return "No matches found";
+  if (normalized.includes("movie not found")) return "No matches found.";
   return errorMessage;
 }
 
@@ -36,7 +38,7 @@ function mapOmdbErrorMessage(errorMessage) {
 // but the interface still needs to communicate that work is happening.
 function setLoading(isLoading, message = "Loading movies...") {
   // Query the two UI nodes that change during loading.
-  const movieGridEl = document.querySelector(".movie-results--grid");
+  const movieGridEl = document.querySelector(".movie-grid");
   const sortSelectEl = document.querySelector("#sort-select");
   if (isLoading) {
     // Swap the results grid for a temporary loading UI.
@@ -44,7 +46,8 @@ function setLoading(isLoading, message = "Loading movies...") {
       <div class="movie-grid__loading" role="status" aria-live="polite">
         <div class="spinner" aria-hidden="true"></div>
         <p>${message}</p>
-      </div>`;
+      </div>
+    `;
   }
   // Disable sorting while loading to avoid conflicting re-sorts.
   if (sortSelectEl) sortSelectEl.disabled = isLoading;
@@ -54,27 +57,30 @@ function setLoading(isLoading, message = "Loading movies...") {
 // The important idea is that the DOM is re-derived from the current state
 // instead of manually tweaking lots of small elements.
 async function renderMovieGrid(moviesToRender, message = "No movies found.") {
-  // This container is the render target for every page state.
-  const movieGridEl = document.querySelector(".movie-results--grid");
+  // This one container is the render target for every page state.
+  const movieGridEl = document.querySelector(".movie-grid");
   if (!moviesToRender.length) {
-    // Empty state uses a full-width status message instead of blank space.
+    // Empty states use a full-width status message instead of blank space.
     movieGridEl.innerHTML = `
       <p class="movie-grid__message" role="status" aria-live="polite">
         <span class="movie-grid__message-body">
           <span class="movie-grid__message-icon" aria-hidden="true">i</span>
-          <span class="movie-grid__message-text" aria-hidden="true">${message}</span>`;
+          <span class="movie-grid__message-text">${message}</span>
+        </span>
+      </p>
+    `;
     return;
   }
   // Build all card markup first, then write to the DOM once.
   movieGridEl.innerHTML = moviesToRender.map(buildMovieCardMarkup).join("");
 }
 
-function onSearchChange(event) {
-  // This handler is wired directly from the input element in index.html
+async function onSearchChange(event) {
+  // This handler is wired directly from the input element in index.html.
   // It is responsible only for orchestrating search timing, not rendering details.
   // event.target is the <input>, so its current value is the live search text.
   // Normalize the input so accidental spaces do not trigger bad searches.
-  let query = event.target.value.trim();
+  const query = event.target.value.trim();
   // Each keystroke gets a unique id so we can ignore stale responses later.
   const searchId = ++latestSearchId;
 
@@ -84,7 +90,8 @@ function onSearchChange(event) {
     // Reset both in-memory result lists when the search box becomes empty.
     searchResults = [];
     movieDetails = [];
-    renderMovieGrid([], "Use the search bar to find movies or shows");
+    renderMovieGrid([], "Use the search bar to find movies");
+    return;
   }
   // Wait 350ms after the latest keystroke before hitting the API.
   searchDebounceTimer = setTimeout(() => {
@@ -101,16 +108,16 @@ function clearSearchInput() {
   searchResults = [];
   movieDetails = [];
   latestSearchId += 1;
-  renderMovieGrid([], "Use the search bar to find movies or shows");
+  renderMovieGrid([], "Use the search bar to find movies");
   searchInput.focus();
 }
 
 async function runSearch(query, searchId) {
   // This function is the app's async data pipeline.
   // It fetches search results first, then fetches richer movie details for each match.
-  // Only the newest search request is allowed to control the loading state
+  // Only the newest search request is allowed to control the loading state.
   if (searchId === latestSearchId) {
-    setLoading(true, "Searching movies");
+    setLoading(true, "Searching movies...");
   }
 
   try {
@@ -123,7 +130,7 @@ async function runSearch(query, searchId) {
     // Ignore stale responses from older searches.
     if (searchId !== latestSearchId) return;
     if (data.Response === "False") {
-      // OMDB returns many failues inside the JSON payload instead of with HTTP errors.
+      // OMDB returns many failures inside the JSON payload instead of with HTTP errors.
       searchResults = [];
       movieDetails = [];
       renderMovieGrid([], mapOmdbErrorMessage(data.Error));
@@ -138,17 +145,18 @@ async function runSearch(query, searchId) {
     }
 
     // Fetch full details for each movie card (up to 6).
-    // This is a two-step API strategy:
+    // This is a deliberate two-step API strategy:
     // - first call: quick broad search by title
     // - second calls: richer details by imdbID for the cards/modal
     // Each request is isolated so one failure doesn't break the batch.
     const detailPromises = searchResults.slice(0, 6).map(async (movie) => {
       try {
+        // Each imdbID is used to request a richer movie record.
         const res = await fetch(
           `https://www.omdbapi.com/?i=${movie.imdbID}&apikey=${API_KEY}`,
         );
         const data = await res.json();
-        // If one detail request failts logically, keep the base movie object.
+        // If one detail request fails logically, keep the base movie object.
         return data.Response === "False" ? movie : data;
       } catch {
         // Fallback to the lightweight movie object if details fail.
@@ -156,14 +164,13 @@ async function runSearch(query, searchId) {
       }
     });
     // Resolve all detail requests concurrently instead of one at a time.
-    // Promise.all improves total wait time beacuse the requests run in parallel.
+    // Promise.all improves total wait time because the requests run in parallel.
     movieDetails = await Promise.all(detailPromises);
 
     // Sorting is applied after details load because fields like rating/runtime live there.
     const sortSelectEl = document.querySelector("#sort-select");
-    console.log(sortSelectEl);
+
     if (sortSelectEl && sortSelectEl.value) {
-      console.log(sortSelectEl.value, "sse value");
       sortMovies(sortSelectEl.value);
     } else {
       renderMovieGrid(movieDetails);
@@ -188,8 +195,8 @@ function sortMovies(sortValue) {
   if (!movieDetails.length) return;
 
   setLoading(true, "Sorting...");
-  console.log("sortMovies", sortValue);
-  // requestAnimationFrame allows allows the loading state to paint before sort work runs.
+
+  // requestAnimationFrame allows the loading state to paint before sort work runs.
   requestAnimationFrame(() => {
     // Spread into a new array so sort does not mutate the source state directly.
     // Avoiding mutation makes state changes more predictable and easier to debug.
@@ -203,20 +210,21 @@ function sortMovies(sortValue) {
       });
     } else if (sortValue === "OLD_TO_NEW") {
       sortedMovies = [...movieDetails].sort((a, b) => {
-        releasedA = new Date(a.Released).getTime() || 0;
-        releasedB = new Date(b.Released).getTime() || 0;
+        const releasedA = new Date(a.Released).getTime() || 0;
+        const releasedB = new Date(b.Released).getTime() || 0;
         return releasedA - releasedB;
       });
     } else if (sortValue === "RATING_LOW_TO_HIGH") {
       sortedMovies = [...movieDetails].sort((a, b) => {
-        ratingA = Number(a.imdbRating) || 0;
-        ratingB = Number(b.imdbRating) || 0;
+        // OMDB ratings are strings, so coerce them into numbers before sorting.
+        const ratingA = Number(a.imdbRating) || 0;
+        const ratingB = Number(b.imdbRating) || 0;
         return ratingA - ratingB;
       });
     } else if (sortValue === "RATING_HIGH_TO_LOW") {
       sortedMovies = [...movieDetails].sort((a, b) => {
-        ratingA = Number(a.imdbRating) || 0;
-        ratingB = Number(b.imdbRating) || 0;
+        const ratingA = Number(a.imdbRating) || 0;
+        const ratingB = Number(b.imdbRating) || 0;
         return ratingB - ratingA;
       });
     } else {
@@ -233,43 +241,43 @@ function sortMovies(sortValue) {
 // Template strings are convenient here, but they also mean the app is trusting
 // API-provided text enough to insert it into HTML, which is a real interview discussion point.
 function buildMovieCardMarkup(movie) {
-  // Defenseive formatting for missing OMDb fields.
+  // Defensive formatting for missing OMDB fields.
   const posterSrc =
-    movie.Poster && movie !== "N/A"
+    movie.Poster && movie.Poster !== "N/A"
       ? movie.Poster
       : "https://via.placeholder.com/400x600?text=No+Poster";
   // Return one complete movie-card template as a string.
-  // The imdbId acts as a stable unique identifier for later lookups.
+  // The imdbID acts as a stable unique identifier for later lookups.
   return `<div class="movie-card">
-            <div class="movie-card__media" onclick="openMovieModal('${movie.imdbID}')">
-              <figure>
-                <img src="${posterSrc}" alt="${movie.Title || "Movie"}">
-              </figure>
-            </div>
-            <div class="movie-card__details" onclick="openMovieModal('${movie.imdbID}')">
-              <h3>${movie.Title || "Untitled"}</h3>
-              <p><b>Released: ${movie.Released || "Unknown"}</b></p>
-              <p><b>Runtime: ${movie.Runtime && movie.Runtime !== "N/A" ? movie.Runtime : "Unknown"}</b></p>
-              <p><b> ${movie.Genre || "Unknown"}</b></p>
-              <p><b>IMDb rating: ${movie.imdbRating || "N/A"}</b></p>
-            </div>
-          </div>`;
+      <div class="movie-card__media" onclick="openMovieDetailsModal('${movie.imdbID}')">
+        <figure>
+          <img src="${posterSrc}" alt="${movie.Title || "Movie"}">
+        </figure>
+      </div>
+    <div class="movie-card__details" onclick="openMovieDetailsModal('${movie.imdbID}')">
+      <h3>${movie.Title || "Untitled"}</h3>
+      <p><b>Released: ${movie.Released || "Unknown"}</b></p>
+      <p><b>Runtime: ${movie.Runtime && movie.Runtime !== "N/A" ? movie.Runtime : "Unknown"}</b></p>
+      <p><b>Genre: ${movie.Genre || "Unknown"}</b></p>
+      <p><b>imdb Rating: ${movie.imdbRating || "N/A"}</b></p>
+    </div>
+  </div>`;
 }
 
-// opens the modal with detailed info for the selected movie.
+// Opens the modal with detailed info for the selected movie.
 // This is where cached application state is translated into visible UI state.
 function openMovieDetailsModal(imdbID) {
   // Find the clicked movie inside the already-fetched detailed result set.
   const movie = movieDetails.find((item) => item.imdbID === imdbID);
   if (!movie) return;
   // Cache the modal nodes that will be updated with the selected movie's data.
-  const modal = document.querySelector(".modal");
-  const modalPoster = document.querySelector(".modal__poster");
-  const modalTitle = document.querySelector(".moda__title");
-  const modalMeta = document.querySelector(".modal__meta");
-  const modalRuntime = document.querySelector(".modal__runtime");
-  const modalCast = document.querySelector(".modal__cast");
-  const modalPlot = document.querySelector(".modal__plot");
+  const modal = document.querySelector("#movie-details-modal");
+  const poster = document.querySelector("#movie-details-modal-poster");
+  const title = document.querySelector("#movie-details-modal-title");
+  const meta = document.querySelector("#movie-details-modal-meta");
+  const runtime = document.querySelector("#movie-details-modal-runtime");
+  const cast = document.querySelector("#movie-details-modal-cast");
+  const text = document.querySelector("#movie-details-modal-text");
   // Fallback poster avoids broken image icons for N/A values.
   const posterSrc =
     movie.Poster && movie.Poster !== "N/A"
@@ -277,9 +285,9 @@ function openMovieDetailsModal(imdbID) {
       : "https://via.placeholder.com/400x600?text=No+Poster";
   // These assignments connect application state to visible DOM content.
   // textContent is preferred for plain text because it avoids parsing HTML.
-  posterSrc.src = posterSrc;
-  posterSrc.alt = `${movie.Title || "Movie"} poster`;
-  modalTitle.textContent = movie.Title || "Untitled";
+  poster.src = posterSrc;
+  poster.alt = `${movie.Title || "Movie"} poster`;
+  title.textContent = movie.Title || "Untitled";
   // Style each field on its own line in the modal
   const type =
     movie.Type && movie.Type !== "N/A"
@@ -288,10 +296,10 @@ function openMovieDetailsModal(imdbID) {
   // innerHTML is used here for convenience because the labels include small bits of markup.
   // In production, a safer approach is to build these nodes with createElement/textContent
   // so remote API content is never interpreted as HTML.
-  modalMeta.innerHTML = `<div><b>Released:</b> ${movie.Released || "Unknown"}</div><div><b>Genre:</b> ${movie.Genre}</div><div><b>Type:</b> ${type}</div>`;
-  modalRuntime.innerHTML = `<div><b>Runtime:</b> ${movie.Runtime && movie.Runtime !== "N/A" ? movie.Runtime : "Unknown runtime"}</div>`;
-  modalCast.innerHTML = `<div><b>Director:</b> ${movie.Director || "Unknown"}</div><div><b>Cast:</b> ${movie.Actors && movie.Actors !== "N/A" ? movie.Actors : "Unknown cast"}</div>`;
-  modalText.innerHTML = `<div class="movie-details-modal__plot"><b>Plot:</b><p class="movie-details-modal__plot-text"> ${movie.Plot && movie.Plot !== "N/A" ? movie.Plot : "Plot description unavailable."}</p></div>`;
+  meta.innerHTML = `<div><b>Released:</b> ${movie.Released || "Unknown"}</div><div><b>Genre:</b> ${movie.Genre || "Unknown Genre"}</div><div><b>Type:</b> ${type}</div>`;
+  runtime.innerHTML = `<div><b>Runtime:</b> ${movie.Runtime && movie.Runtime !== "N/A" ? movie.Runtime : "Unknown runtime"}</div>`;
+  cast.innerHTML = `<div><b>Director:</b> ${movie.Director || "Unknown"}</div><div><b>Cast:</b> ${movie.Actors && movie.Actors !== "N/A" ? movie.Actors : "Unknown cast"}</div>`;
+  text.innerHTML = `<div class="movie-details-modal__plot"><b>Plot:</b><p class="movie-details-modal__plot-text"> ${movie.Plot && movie.Plot !== "N/A" ? movie.Plot : "Plot description unavailable."}</p></div>`;
   // Toggle modal visibility state and accessibility attribute together.
   modal.classList.add("movie-details-modal--open");
   modal.setAttribute("aria-hidden", "false");
@@ -317,4 +325,5 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") closeMovieDetailsModal();
 });
 
+// Initial render establishes the app's default state before any search occurs.
 renderMovieGrid([], "Use the search bar to find movies or shows");
