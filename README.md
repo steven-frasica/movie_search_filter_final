@@ -1,5 +1,7 @@
 # Theater6
 
+<img width="1792" height="995" alt="Screenshot 2026-04-05 at 8 10 59 AM" src="https://github.com/user-attachments/assets/818c4c05-5e4e-482c-828f-92fcb6dd7025" />
+
 Theater6 is a movie search app built with HTML, CSS, and JavaScript using the OMDb API. Users can search for movies or shows, sort the results, and open a modal to view more details about a selected title.
 
 This project helped me practice building a small front-end application with real API data, dynamic rendering, client-side sorting, and interactive UI states.
