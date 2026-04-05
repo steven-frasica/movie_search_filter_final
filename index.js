@@ -137,7 +137,7 @@ async function runSearch(query, searchId) {
       return;
     }
     // The search endpoint returns lightweight results under the Search property.
-    searchResults = data.Search.slice(0, 6) ?? [];
+    searchResults = data.Search ?? [];
     console.log(searchResults, 'searchResults')
     if (!searchResults.length) {
       movieDetails = [];
@@ -150,7 +150,7 @@ async function runSearch(query, searchId) {
     // - first call: quick broad search by title
     // - second calls: richer details by imdbID for the cards/modal
     // Each request is isolated so one failure doesn't break the batch.
-    const detailPromises = searchResults.map(async (movie) => {
+    const detailPromises = searchResults.slice(0,6).map(async (movie) => {
       try {
         // Each imdbID is used to request a richer movie record.
         const res = await fetch(
