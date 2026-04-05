@@ -30,7 +30,7 @@
             &times;
           </button>
         </div>
-        <select name="sort" class="sort-select" id="sort-select">
+        <select name="sort" class="sort-select" id="sort-select" onchange="sortMovies(event.target.value)">
           <option value="" disabled selected>Sort</option>
           <option value="NEW_TO_OLD">Newest First</option>
           <option value="OLD_TO_NEW">Oldest First</option>
@@ -45,7 +45,18 @@
           <i class="fas fa-spinner movies__loading--spinner"></i>
         </div>
       </section>
-      <footer></footer>
+          </main>
+      <footer>
+        <div class="footer__inner">
+          <div class="footer__stack">
+            <div>
+              <figure class="footer__logo">
+                <img src="./assets/movie.png" alt="" class="footer__img">
+              </figure>
+            </div>
+          </div>
+        </div>
+      </footer>
       <div class="modal" aria-hidden="true">
         <div class="modal__details--container"></div>
         <button class="modal__close--button"></button>
@@ -56,6 +67,5 @@
         <div class="modal__cast"></div>
         <div class="modal__plot"></div>
       </div>
-    </main>
   </body>
 </html>
