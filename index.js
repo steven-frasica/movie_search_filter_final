@@ -137,7 +137,8 @@ async function runSearch(query, searchId) {
       return;
     }
     // The search endpoint returns lightweight results under the Search property.
-    searchResults = data.Search ?? [];
+    searchResults = data.Search.slice(0, 6) ?? [];
+    console.log(searchResults, 'searchResults')
     if (!searchResults.length) {
       movieDetails = [];
       renderMovieGrid([], "No matches found.");
@@ -149,7 +150,7 @@ async function runSearch(query, searchId) {
     // - first call: quick broad search by title
     // - second calls: richer details by imdbID for the cards/modal
     // Each request is isolated so one failure doesn't break the batch.
-    const detailPromises = searchResults.slice(0, 6).map(async (movie) => {
+    const detailPromises = searchResults.map(async (movie) => {
       try {
         // Each imdbID is used to request a richer movie record.
         const res = await fetch(
@@ -271,13 +272,13 @@ function openMovieDetailsModal(imdbID) {
   const movie = movieDetails.find((item) => item.imdbID === imdbID);
   if (!movie) return;
   // Cache the modal nodes that will be updated with the selected movie's data.
-  const modal = document.querySelector("#movie-details-modal");
-  const poster = document.querySelector("#movie-details-modal-poster");
-  const title = document.querySelector("#movie-details-modal-title");
-  const meta = document.querySelector("#movie-details-modal-meta");
-  const runtime = document.querySelector("#movie-details-modal-runtime");
-  const cast = document.querySelector("#movie-details-modal-cast");
-  const text = document.querySelector("#movie-details-modal-text");
+  const modal = document.querySelector("#modal");
+  const poster = document.querySelector("#modal-poster");
+  const title = document.querySelector("#modal-title");
+  const meta = document.querySelector("#modal-meta");
+  const runtime = document.querySelector("#modal-runtime");
+  const cast = document.querySelector("#modal-cast");
+  const text = document.querySelector("#modal-text");
   // Fallback poster avoids broken image icons for N/A values.
   const posterSrc =
     movie.Poster && movie.Poster !== "N/A"
@@ -299,24 +300,24 @@ function openMovieDetailsModal(imdbID) {
   meta.innerHTML = `<div><b>Released:</b> ${movie.Released || "Unknown"}</div><div><b>Genre:</b> ${movie.Genre || "Unknown Genre"}</div><div><b>Type:</b> ${type}</div>`;
   runtime.innerHTML = `<div><b>Runtime:</b> ${movie.Runtime && movie.Runtime !== "N/A" ? movie.Runtime : "Unknown runtime"}</div>`;
   cast.innerHTML = `<div><b>Director:</b> ${movie.Director || "Unknown"}</div><div><b>Cast:</b> ${movie.Actors && movie.Actors !== "N/A" ? movie.Actors : "Unknown cast"}</div>`;
-  text.innerHTML = `<div class="movie-details-modal__plot"><b>Plot:</b><p class="movie-details-modal__plot-text"> ${movie.Plot && movie.Plot !== "N/A" ? movie.Plot : "Plot description unavailable."}</p></div>`;
+  text.innerHTML = `<div class="modal__plot"><b>Plot:</b><p class="modal__plot-text"> ${movie.Plot && movie.Plot !== "N/A" ? movie.Plot : "Plot description unavailable."}</p></div>`;
   // Toggle modal visibility state and accessibility attribute together.
-  modal.classList.add("movie-details-modal--open");
+  modal.classList.add("modal--open");
   modal.setAttribute("aria-hidden", "false");
 }
 
 // Closes the modal dialog and restores its hidden accessibility state.
 function closeMovieDetailsModal() {
-  const modal = document.querySelector("#movie-details-modal");
+  const modal = document.querySelector("#modal");
   // Reverse the same state change used to open the modal.
-  modal.classList.remove("movie-details-modal--open");
+  modal.classList.remove("modal--open");
   modal.setAttribute("aria-hidden", "true");
 }
 
 // Global listeners support standard dialog interactions.
 // The backdrop click closes only when the click lands outside the dialog itself.
 document.addEventListener("click", (event) => {
-  const modal = document.querySelector("#movie-details-modal");
+  const modal = document.querySelector("#modal");
   // Close only when the backdrop itself is clicked, not the modal content.
   if (event.target === modal) closeMovieDetailsModal();
 });

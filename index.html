@@ -90,49 +90,49 @@
       so the app does not need another API request when a card is clicked.
     -->
     <div
-      id="movie-details-modal"
-      class="movie-details-modal"
+      id="modal"
+      class="modal"
       aria-hidden="true"
     >
       <div
-        class="movie-details-modal__dialog"
+        class="modal__dialog"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="movie-details-modal-title"
+        aria-labelledby="modal-title"
       >
         <button
-          class="movie-details-modal__close"
+          class="modal__close"
           type="button"
           onclick="closeMovieDetailsModal()"
           aria-label="Close modal"
         >
           &times;
         </button>
-        <div class="movie-details-modal__content">
+        <div class="modal__content">
           <img
-            id="movie-details-modal-poster"
-            class="movie-details-modal__poster"
+            id="modal-poster"
+            class="modal__poster"
             src=""
             alt="Movie poster"
           />
-          <div class="movie-details-modal__body">
-            <h3 id="movie-details-modal-title"></h3>
+          <div class="modal__body">
+            <h3 id="modal-title"></h3>
             <!-- Individual content regions make it easier to update modal fields independently. -->
             <div
-              id="movie-details-modal-meta"
-              class="movie-details-modal__meta"
+              id="modal-meta"
+              class="modal__meta"
             ></div>
             <div
-              id="movie-details-modal-runtime"
-              class="movie-details-modal__runtime"
+              id="modal-runtime"
+              class="modal__runtime"
             ></div>
             <div
-              id="movie-details-modal-cast"
-              class="movie-details-modal__cast"
+              id="modal-cast"
+              class="modal__cast"
             ></div>
             <div
-              id="movie-details-modal-text"
-              class="movie-details-modal__text"
+              id="modal-text"
+              class="modal__text"
             ></div>
           </div>
         </div>

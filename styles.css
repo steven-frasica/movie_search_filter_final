@@ -337,7 +337,7 @@ figure,
   overflow-wrap: anywhere;
 }
 
-.movie-details-modal {
+.modal {
   /* Full-screen backdrop that dims the page behind dialog content. */
   /* display:none keeps it out of layout until JS toggles the open class. */
   position: fixed;
@@ -362,12 +362,12 @@ figure,
 }
 
 /* Toggled on in JS to show modal. */
-.movie-details-modal--open {
+.modal--open {
   display: flex;
 }
 
 /* modal content */
-.movie-details-modal__dialog {
+.modal__dialog {
   /* width:min(...) keeps the modal readable without overflowing the viewport. */
   /* max-height plus overflow:auto ensures long plots remain scrollable. */
   color: #fff;
@@ -384,7 +384,7 @@ figure,
   );
 }
 
-.movie-details-modal__content {
+.modal__content {
   /* Desktop layout: poster + text side-by-side. */
   /* CSS Grid is a good fit here because the modal has two explicit columns. */
   display: grid;
@@ -393,7 +393,7 @@ figure,
   align-items: start;
 }
 
-.movie-details-modal__poster {
+.modal__poster {
   /* Reuse the same poster ratio inside the modal. */
   width: 100%;
   max-width: 100%;
@@ -403,12 +403,12 @@ figure,
   border: 1px solid rgba(126, 232, 255, 0.28);
 }
 
-.movie-details-modal__body {
+.modal__body {
   /* Prevent long text from forcing the grid wider than the modal allows. */
   min-width: 0;
 }
 
-.movie-details-modal__close {
+.modal__close {
   float: right;
   border: 0;
   background: transparent;
@@ -418,33 +418,33 @@ figure,
 }
 
 /* Modal text spacing/color */
-.movie-details-modal__dialog h3 {
+.modal__dialog h3 {
   margin: 0 0 6px;
 }
 
-.movie-details-modal__meta {
+.modal__meta {
   margin: 10px 0 12px;
   color: #cbd6e4;
   font-size: 0.9rem;
 }
 
 /* Style each field in the modal to appear on its own line with spacing */
-.movie-details-modal__meta div,
-.movie-details-modal__runtime div,
-.movie-details-modal__cast div {
+.modal__meta div,
+.modal__runtime div,
+.modal__cast div {
   /* Treat each labeled detail as a separate row for readability. */
   margin-bottom: 6px;
   line-height: 1.5;
 }
 
-.movie-details-modal__runtime {
+.modal__runtime {
   margin: 0 0 10px;
   color: #d4ddeb;
   font-size: 0.92rem;
   font-weight: 500;
 }
 
-.movie-details-modal__cast {
+.modal__cast {
   margin: 0 0 12px;
   color: #dce5f1;
   font-size: 0.95rem;
@@ -452,7 +452,7 @@ figure,
   letter-spacing: 0.01em;
 }
 
-.movie-details-modal__text {
+.modal__text {
   margin: 0 0 12px;
   color: #dce5f1;
   font-size: 0.95rem;
@@ -460,13 +460,13 @@ figure,
   letter-spacing: 0.01em;
 }
 
-.movie-details-modal__plot {
+.modal__plot {
   /* Flex keeps the Plot label and paragraph aligned on one row. */
   /* This is a simple one-dimensional layout, so flex is more appropriate than grid here. */
   display: flex;
 }
 
-.movie-details-modal__plot-text {
+.modal__plot-text {
   /* Remove the default paragraph top margin so it lines up with the Plot label. */
   margin-top: 0;
   margin-left: 0.5rem;
@@ -549,12 +549,12 @@ footer {
 }
 
 @media (max-width: 760px) {
-  .movie-details-modal__content {
+  .modal__content {
     /* Stack modal content vertically on smaller screens. */
     grid-template-columns: 1fr;
   }
 
-  .movie-details-modal__poster {
+  .modal__poster {
     max-width: 260px;
     justify-self: center;
   }
